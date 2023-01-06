@@ -1,0 +1,92 @@
+parameters:
+  log_phi: 0.004879164659994692 # why is this called log_phi?
+  phi_exp: -1.63947599
+  M_star: -21.4189736
+  M_exp: -0.0748711
+  alpha: 0.44169467
+  phi_exp-1: -5.32278 #-5.039350524472925
+cosmology: !astropy.cosmology.FlatLambdaCDM
+  H0: 70
+  Om0: 0.3
+mag_lim: 27
+sky_area: 1.27 deg2
+filters:
+  des: [ decam2014-u, decamDR1-g, decamDR1-r, decamDR1-i, decamDR1-z ] # these need to be speclite? NIR don't exist.
+  hsc: [ hsc2017-g, hsc2017-r, hsc2017-i, hsc2017-z, hsc2017-y ]
+  vista: [ 'vista-Y', 'vista-J', 'vista-H', 'vista-Ks' ]
+bands_des: 'ugriz'
+bands_hsc: 'grizy'
+bands_vista: 'YJHK'
+mag_limits:
+  des: [25.0, 25.9, 25.5, 25.0, 24.3]
+  hsc: [27.8, 27.4, 27.1, 26.6, 25.6]
+  vista: [24.5, 24.5, 24.2, 23.75]
+z_range: !numpy.geomspace [0.01, 4.5, 100]
+tables:
+  passive:
+    z, M_r: !skypy.galaxies.schechter_lf
+      redshift: $z_range
+      M_star: !astropy.modeling.models.Linear1D [$M_exp, $M_star]
+      phi_star: !astropy.modeling.models.Exponential1D [$log_phi, $phi_exp-1] # astropy function requires 1/tau as second argument
+      alpha: $alpha
+      m_lim: $mag_lim
+      sky_area: $sky_area
+    coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
+      redshift: !numpy.zeros_like [$passive.z]
+      # Test
+      #alpha0: [0.40607936, 0.03563725, 1.15169039, 12.06335464, 0.17928599]
+      #alpha1: [0.2319544, 0.02695967, 3.05139505, 4.77657408, 0.46556226]
+      # Tortorelli 2021
+      #alpha0: [1.293, 1.802, 1.492, 1.577, 1.618]
+      #alpha1: [1.321, 1.637, 1.558, 1.404, 1.703]
+      # Tortorelli 2020
+      #alpha0: [1.316, 1.936, 1.683, 1.281, 1.844]
+      #alpha1: [2.644, 1.876, 1.421, 1.404, 2.566]
+      # Herbel
+      #weight: [3.84e+09, 1.57e+06, 3.91e+08, 4.66e+10, 3.03e+07]
+      # NEW
+      alpha0: [1.95, 2., 1. , 1.7, 2.2]
+      alpha1: [0.9, 2.2,  1., 1.7, 2.]
+      weight: [9.37089161e-02, 1.29501114e-06, 2.97027927e-02, 8.49022904e-01, 1.84128669e-03]
+    sm: !skypy.galaxies.spectrum.kcorrect.stellar_mass
+      coefficients: $passive.coeff
+      magnitudes: $passive.M_r
+      filter: hsc2017-r
+    sm_remain: !skypy.galaxies.spectrum.kcorrect.stellar_mass_remain
+      coefficients: $passive.coeff
+      magnitudes: $passive.M_r
+      filter: hsc2017-r
+    m_des_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $passive.z
+      coefficients: $passive.coeff
+      stellar_mass: $passive.sm
+      filters: $filters.des
+    m_des_sim, des_sigma: !skypy_x.galaxies_paper.gaussian_error
+      m: $passive.m_des_true
+      m_lim: $mag_limits.des
+      #rykoff_parameters: "rykoff_DES_DF.pars"  # can be file path or numpy array (np not working)
+      rykoff_parameters: !numpy.array [[[-0.27266759, 1.4292106],[-4.10670196, 2.15971589],
+      [5.2454043, 0.15184746],[-4.6139142, 2.5307399],[-3.45271662, 2.45638379]]]
+      m_zp: 30
+    m_hsc_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $passive.z
+      coefficients: $passive.coeff
+      stellar_mass: $passive.sm
+      filters: $filters.hsc
+    m_hsc_sim, hsc_sigma: !skypy_x.galaxies_paper.gaussian_error
+      m: $passive.m_hsc_true
+      m_lim: $mag_limits.hsc
+      rykoff_parameters: !numpy.array [[[3.171762, 0.66012], [2.49441, 0.80837], [1.928186, 0.95754], [1.778944, 0.99381], [1.771616, 1.017114]]]
+      #rykoff_parameters: !numpy.array [[[135.095407, 20.425863], [-2.270331, 0.924841], [-0.272460, 0.563884], [-0.707218, 0.618222], [61.117607, 13.634286]]]
+      #rykoff_parameters: !numpy.array [[[1.541275, -1.000737], [135.095407, 20.425863], [3.41, 1.15], [3.41, 1.15], [3.41, 1.15]]] # can also be file path
+      m_zp: 30
+    m_vista_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $passive.z
+      coefficients: $passive.coeff
+      stellar_mass: $passive.sm
+      filters: $filters.vista
+    m_vista_sim, vista_sigma: !skypy_x.galaxies_paper.gaussian_error
+      m: $passive.m_vista_true
+      m_lim: $mag_limits.vista
+      rykoff_parameters: !numpy.array [[[2.07, 0.666], [2.07, 0.666], [1.801, 0.726], [1.896, 0.688]]] # can also be file path - currently wrong values
+      m_zp: 30

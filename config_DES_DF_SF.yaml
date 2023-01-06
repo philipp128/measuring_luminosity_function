@@ -1,0 +1,118 @@
+parameters:
+  log_phi: 0.00412794712397292
+  phi_exp: -0.19843827
+  M_star: -21.72410256
+  M_exp: -0.14627561
+  alpha: -1.27094795
+  phi_exp-1: -5.49 #-5.039350524472925
+cosmology: !astropy.cosmology.FlatLambdaCDM
+  H0: 70
+  Om0: 0.3
+mag_lim: 27
+sky_area: 1.27 deg2
+filters:
+  des: [ decam2014-u, decamDR1-g, decamDR1-r, decamDR1-i, decamDR1-z ] # these need to be speclite? NIR don't exist.
+  hsc: [ hsc2017-g, hsc2017-r, hsc2017-i, hsc2017-z, hsc2017-y ]
+  vista: [ 'vista-Y', 'vista-J', 'vista-H', 'vista-Ks' ]
+bands_des: 'ugriz'
+bands_hsc: 'grizy'
+bands_vista: 'YJHK'
+mag_limits:
+  des: [25.0, 25.9, 25.5, 25.0, 24.3]
+  hsc: [27.8, 27.4, 27.1, 26.6, 25.6]
+  vista: [24.5, 24.5, 24.2, 23.75]
+z_range: !numpy.geomspace [0.01, 4.5, 100]
+tables:
+  SF:
+    z, M_r: !skypy.galaxies.schechter_lf
+      redshift: $z_range
+      M_star: !astropy.modeling.models.Linear1D [$M_exp, $M_star]
+      phi_star: !astropy.modeling.models.Exponential1D [$log_phi, $phi_exp-1] # astropy function requires 1/tau as second argument
+      alpha: $alpha
+      m_lim: $mag_lim
+      sky_area: $sky_area
+    coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
+      redshift: !numpy.zeros_like [$SF.z]
+      # COSMOS version
+      #alpha0: [0.42017859, 1.19828364, 0.47378861, 0.35761691, 0.98973132]
+      #alpha1: [0.41210725, 1.17290003, 0.47106233, 0.35392173, 0.96820022]
+      #weight: [17733562.6913365, 10504546.29149004, 40932291.85583338, 59659207.97752497, 42803511.91729467]
+      # Test
+      #alpha0: [0.44699679, 0.30542258, 2.25806626, 2.66187819, 1.4073528]
+      #alpha1: [0.17285971, 0.22596517, 0.29654192, 0.16454226, 1.24121978]
+      # Tortorelli 2021
+      #alpha0: [1.153, 2.209, 1.589, 1.308, 1.908]
+      #alpha1: [1.287, 3.778, 0.807, 1.043, 1.229]
+      # Tortorelli 2020
+      #alpha0: [1.171, 3.055, 1.394, 1.669, 1.855]
+      #alpha1: [2.385, 4.294, 0.898, 1.895, 1.459]
+      #weight: [3.47e+09, 3.31e+06, 2.13e+09, 1.64e+10, 1.01e+09]
+      #
+      # Tortorelli 2021 - MOD - fairly good
+      #alpha0: [1.153, 0.909, 1.589, 1.308, 1.908]
+      #alpha1: [1.287, 3.778, 0.807, 1.043, 1.929]
+      #weight: [3.47e+09, 3.31e+07, 2.13e+09, 1.64e+10, 7.05e+09]
+      # NEW
+      #alpha0: [0.54622106, 1.45236426, 0.61781718, 0.45209882, 1.2961172 ]
+      #alpha1: [0.42497988, 1.15919709, 0.4698176,  0.35471603, 0.96161475]
+      #weight: [1.5795255e+10, 1.6559349e+07, 4.0283878e+09, 4.5195129e+10, 2.4708234e+09]
+      # This is close - need to reduce M/L a bit, up-weight second component a bit? 
+      #alpha0: [0.45275026, 1.15795923, 0.4693574 , 0.35528672, 0.96301629]
+      #alpha1: [0.41036045, 1.13107366, 0.47183088, 0.34507646, 0.9924808 ]
+      # Close also
+      #alpha0: [0.45261767, 1.15767085, 0.46934113, 0.35521812, 0.96314714]
+      #alpha1: [0.59188117, 1.32547798, 0.60193004, 0.42844164, 1.20383279]
+      #weight: [7.31798350e-01, 7.74462862e-04, 1.90468822e-01, 2.09681844e+00, 1.11666356e-01]
+      # Using EAzY scaling for weight - still have M/L issue.
+      # Coeffs look quite good though.
+      #alpha0: [0.43048784, 1.17808549, 0.4604304 , 0.35535311, 0.99224891]
+      #alpha1: [0.52723424, 1.31746415, 0.61237651, 0.43656738, 1.30194956]
+      #weight: [1.26903294e+11, 1.97794727e+08, 1.24923525e+10, 9.78871835e+10, 7.28757803e+09]
+      #weight: [7.31798350e-01, 7.74462862e-04, 1.90468822e-01, 2.09681844e+00, 1.11666356e-01]
+      alpha0: [0.43048784, 1.07808549, 0.4604304 , 0.35535311, 0.99224891]
+      alpha1: [0.52723424, 1.81746415, 0.61237651, 0.43656738, 1.80194956]
+      #alpha0: [0.32, 0.81, 0.6, 0.27, 0.75]
+      #alpha1: [0.39, 1.35, 0.46, 0.33, 1.35]
+      weight: [7.32e-01, 1.1e-03, 6.90e-01, 2.10e+00, 2.50e-01]
+    sm: !skypy.galaxies.spectrum.kcorrect.stellar_mass
+      coefficients: $SF.coeff
+      magnitudes: $SF.M_r
+      filter: hsc2017-r
+    sm_remain: !skypy.galaxies.spectrum.kcorrect.stellar_mass_remain
+      coefficients: $SF.coeff
+      magnitudes: $SF.M_r
+      filter: hsc2017-r
+    m_des_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $SF.z
+      coefficients: $SF.coeff
+      stellar_mass: $SF.sm
+      filters: $filters.des
+    m_des_sim, des_sigma: !skypy_x.galaxies_paper.gaussian_error
+      m: $SF.m_des_true
+      m_lim: $mag_limits.des
+      #rykoff_parameters: "rykoff_DES_DF.pars"  # can be file path or numpy array (np not working)
+      rykoff_parameters: !numpy.array [[[-0.27266759, 1.4292106],[-4.10670196, 2.15971589],
+      [5.2454043, 0.15184746],[-4.6139142, 2.5307399],[-3.45271662, 2.45638379]]]
+      m_zp: 30
+    m_hsc_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $SF.z
+      coefficients: $SF.coeff
+      stellar_mass: $SF.sm
+      filters: $filters.hsc
+    m_hsc_sim, hsc_sigma: !skypy_x.galaxies_paper.gaussian_error
+      m: $SF.m_hsc_true
+      m_lim: $mag_limits.hsc
+      rykoff_parameters: !numpy.array [[[3.171762, 0.66012], [2.49441, 0.80837], [1.928186, 0.95754], [1.778944, 0.99381], [1.771616, 1.017114]]]
+      #rykoff_parameters: !numpy.array [[[135.095407, 20.425863], [-2.270331, 0.924841], [-0.272460, 0.563884], [-0.707218, 0.618222], [61.117607, 13.634286]]]
+      #rykoff_parameters: !numpy.array [[[1.541275, -1.000737], [135.095407, 20.425863], [3.41, 1.15], [3.41, 1.15], [3.41, 1.15]]] # can also be file path
+      m_zp: 30
+    m_vista_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $SF.z
+      coefficients: $SF.coeff
+      stellar_mass: $SF.sm
+      filters: $filters.vista
+    m_vista_sim, vista_sigma: !skypy_x.galaxies_paper.gaussian_error
+      m: $SF.m_vista_true
+      m_lim: $mag_limits.vista
+      rykoff_parameters: !numpy.array [[[2.07, 0.666], [2.07, 0.666], [1.801, 0.726], [1.896, 0.688]]] # can also be file path - currently wrong values
+      m_zp: 30

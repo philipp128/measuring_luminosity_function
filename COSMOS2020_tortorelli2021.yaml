@@ -1,0 +1,103 @@
+parameters:
+  a_m_SF: -0.439
+  b_m_SF: -20.623
+  a_phi_SF: -0.088
+  b_phi_SF: 0.004245
+  a_m_Q: -0.697
+  b_m_Q: -20.372
+  a_phi_Q: -0.836
+  b_phi_Q: 0.005169
+  a_phi-1_SF: -11.36364 #!numpy.divide [1., $a_phi_SF]
+  a_phi-1_Q: -1.19617 #!numpy.divide [1., $a_phi_Q]
+  alpha_SF: -1.3
+  alpha_Q: -0.5
+cosmology: !astropy.cosmology.FlatLambdaCDM
+  H0: 70
+  Om0: 0.3
+mag_lim: 27
+sky_area: 1.27 deg2
+filters:
+  hsc: [ hsc2017-g, hsc2017-r, hsc2017-i, hsc2017-z, hsc2017-y ]
+  vista: [ 'filters/vista-Y.ecsv', 'filters/vista-J.ecsv', 'filters/vista-H.ecsv', 'filters/vista-Ks.ecsv' ]
+bands_hsc: 'grizy'
+bands_vista: 'YJHK'
+mag_limits:
+  hsc: [27.8, 27.4, 27.1, 26.6, 25.6]
+  vista: [24.5, 24.5, 24.2, 23.75]
+z_range: !numpy.geomspace [0.01, 4.5, 100]
+tables:
+  SF:
+    z, M_B: !skypy.galaxies.schechter_lf
+      redshift: $z_range
+      M_star: !astropy.modeling.models.Linear1D [$a_m_SF, $b_m_SF]
+      phi_star: !astropy.modeling.models.Exponential1D [$b_phi_SF, $a_phi-1_SF] # astropy function requires 1/tau as secod argument
+      alpha: $alpha_SF
+      m_lim: $mag_lim
+      sky_area: $sky_area
+    coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
+      redshift: !numpy.zeros_like [$SF.z]
+      alpha0: [1.9946549, 1.99469164, 1.99461187, 1.9946589, 1.99463069]
+      alpha1: [0, 0, 0, 0, 0]
+      weight: [3.47e+09, 3.31e+06, 2.13e+09, 1.64e+10, 1.01e+09]
+    sm: !skypy.galaxies.spectrum.kcorrect.stellar_mass
+      coefficients: $SF.coeff
+      magnitudes: $SF.M_B
+      filter: bessell-B
+    m_hsc_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $SF.z
+      coefficients: $SF.coeff
+      stellar_mass: $SF.sm
+      filters: $filters.hsc
+    m_hsc_sim, hsc_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $SF.m_hsc_true
+      m_lim: $mag_limits.hsc
+      rykoff_parameters: !numpy.array [[[3.171762, 0.66012], [2.49441, 0.80837], [1.928186, 0.95754], [1.778944, 0.99381], [1.771616, 1.017114]]]
+      m_zp: 30
+    m_vista_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $SF.z
+      coefficients: $SF.coeff
+      stellar_mass: $SF.sm
+      filters: $filters.vista
+    m_vista_sim, vista_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $SF.m_vista_true
+      m_lim: $mag_limits.vista
+      rykoff_parameters: !numpy.array [[[2.07, 0.666], [2.07, 0.666], [1.801, 0.726], [1.896, 0.688]]] # can also be file path - currently wrong values
+      m_zp: 30
+  Q:
+    z, M_B: !skypy.galaxies.schechter_lf
+      redshift: $z_range
+      M_star: !astropy.modeling.models.Linear1D [$a_m_Q, $b_m_Q]
+      phi_star: !astropy.modeling.models.Exponential1D [$b_phi_Q, $a_phi-1_Q] # astropy function requires 1/tau as secod argument
+      alpha: $alpha_Q
+      m_lim: $mag_lim
+      sky_area: $sky_area
+      cosmology: $cosmology
+    coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
+      redshift: !numpy.zeros_like [$Q.z]
+      alpha0: [1.62158197, 1.62137391, 1.62175061, 1.62159144, 1.62165971]
+      alpha1: [0, 0, 0, 0, 0]
+      weight: [3.84e+09, 1.57e+06, 3.91e+08, 4.66e+10, 3.03e+07]
+    sm: !skypy.galaxies.spectrum.kcorrect.stellar_mass
+      coefficients: $Q.coeff
+      magnitudes: $Q.M_B
+      filter: bessell-B
+    m_hsc_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $Q.z
+      coefficients: $Q.coeff
+      stellar_mass: $Q.sm
+      filters: $filters.hsc
+    m_hsc_sim, hsc_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $Q.m_hsc_true
+      m_lim: $mag_limits.hsc
+      rykoff_parameters: !numpy.array [[[3.171762, 0.66012], [2.49441, 0.80837], [1.928186, 0.95754], [1.778944, 0.99381], [1.771616, 1.017114]]]
+      m_zp: 30
+    m_vista_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $Q.z
+      coefficients: $Q.coeff
+      stellar_mass: $Q.sm
+      filters: $filters.vista
+    m_vista_sim, vista_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $Q.m_vista_true
+      m_lim: $mag_limits.vista
+      rykoff_parameters: !numpy.array [[[2.07, 0.666], [2.07, 0.666], [1.801, 0.726], [1.896, 0.688]]] # can also be file path - currently wrong values
+      m_zp: 30

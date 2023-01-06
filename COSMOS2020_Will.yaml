@@ -1,0 +1,145 @@
+parameters:
+  log_phi: 0.00412794712397292
+  phi_exp: -0.19843827
+  M_star: -21.72410256
+  M_exp: -0.14627561
+  alpha: -1.27094795
+  phi_exp-1: -5.49 #-5.039350524472925
+  log_phi_passive_1: 0.004879164659994692 # why is this called log_phi?
+  phi_exp_passive_1: -1.63947599
+  M_star_passive_1: -21.4189736
+  M_exp_passive_1: -0.0748711
+  alpha_passive_1: 0.44169467
+  phi_exp-1_passive_1: -5.32278 #-5.039350524472925
+  log_phi_passive_2: 0.0002741907653287565
+  phi_exp_passive_2: -1.93904484
+  M_star_passive_2: -21.4189736
+  M_exp_passive_2: -0.0748711
+  alpha_passive_2: -1.55316951
+  phi_exp-1_passive_2: -8.2017 #-5.039350524472925
+cosmology: !astropy.cosmology.FlatLambdaCDM
+  H0: 70
+  Om0: 0.3
+mag_lim: 27
+sky_area: 1.27 deg2
+filters:
+  hsc: [ hsc2017-g, hsc2017-r, hsc2017-i, hsc2017-z, hsc2017-y ]
+  vista: [ 'filters/vista-Y.ecsv', 'filters/vista-J.ecsv', 'filters/vista-H.ecsv', 'filters/vista-Ks.ecsv' ]
+bands_hsc: 'grizy'
+bands_vista: 'YJHK'
+mag_limits:
+  hsc: [27.8, 27.4, 27.1, 26.6, 25.6]
+  vista: [24.5, 24.5, 24.2, 23.75]
+z_range: !numpy.geomspace [0.01, 4.5, 100]
+tables:
+  SF:
+    z, M_r: !skypy.galaxies.schechter_lf
+      redshift: $z_range
+      M_star: !astropy.modeling.models.Linear1D [$M_exp, $M_star]
+      phi_star: !astropy.modeling.models.Exponential1D [$log_phi, $phi_exp-1] # astropy function requires 1/tau as second argument
+      alpha: $alpha
+      m_lim: $mag_lim
+      sky_area: $sky_area
+    coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
+      redshift: !numpy.zeros_like [$SF.z]
+      alpha0: [0.43048784, 1.07808549, 0.4604304 , 0.35535311, 0.99224891]
+      alpha1: [0.52723424, 1.81746415, 0.61237651, 0.43656738, 1.80194956]
+      weight: [7.32e-01, 1.1e-03, 6.90e-01, 2.10e+00, 2.50e-01]
+    sm: !skypy.galaxies.spectrum.kcorrect.stellar_mass
+      coefficients: $SF.coeff
+      magnitudes: $SF.M_r
+      filter: hsc2017-r
+    m_hsc_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $SF.z
+      coefficients: $SF.coeff
+      stellar_mass: $SF.sm
+      filters: $filters.hsc
+    m_hsc_sim, hsc_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $SF.m_hsc_true
+      m_lim: $mag_limits.hsc
+      rykoff_parameters: !numpy.array [[[3.171762, 0.66012], [2.49441, 0.80837], [1.928186, 0.95754], [1.778944, 0.99381], [1.771616, 1.017114]]]
+      m_zp: 30
+    m_vista_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $SF.z
+      coefficients: $SF.coeff
+      stellar_mass: $SF.sm
+      filters: $filters.vista
+    m_vista_sim, vista_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $SF.m_vista_true
+      m_lim: $mag_limits.vista
+      rykoff_parameters: !numpy.array [[[2.07, 0.666], [2.07, 0.666], [1.801, 0.726], [1.896, 0.688]]] # can also be file path - currently wrong values
+      m_zp: 30
+  passive_1:
+    z, M_r: !skypy.galaxies.schechter_lf
+      redshift: $z_range
+      M_star: !astropy.modeling.models.Linear1D [$M_exp_passive_1, $M_star_passive_1]
+      phi_star: !astropy.modeling.models.Exponential1D [$log_phi_passive_1, $phi_exp-1_passive_1] # astropy function requires 1/tau as second argument
+      alpha: $alpha_passive_1
+      m_lim: $mag_lim
+      sky_area: $sky_area
+    coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
+      redshift: !numpy.zeros_like [$passive_1.z]
+      alpha0: [1.95, 2., 1. , 1.7, 2.2]
+      alpha1: [0.9, 2.2,  1., 1.7, 2.]
+      weight: [9.37089161e-02, 1.29501114e-06, 2.97027927e-02, 8.49022904e-01, 1.84128669e-03]
+    sm: !skypy.galaxies.spectrum.kcorrect.stellar_mass
+      coefficients: $passive_1.coeff
+      magnitudes: $passive_1.M_r
+      filter: hsc2017-r
+    m_hsc_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $passive_1.z
+      coefficients: $passive_1.coeff
+      stellar_mass: $passive_1.sm
+      filters: $filters.hsc
+    m_hsc_sim, hsc_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $passive_1.m_hsc_true
+      m_lim: $mag_limits.hsc
+      rykoff_parameters: !numpy.array [[[3.171762, 0.66012], [2.49441, 0.80837], [1.928186, 0.95754], [1.778944, 0.99381], [1.771616, 1.017114]]]
+      m_zp: 30
+    m_vista_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $passive_1.z
+      coefficients: $passive_1.coeff
+      stellar_mass: $passive_1.sm
+      filters: $filters.vista
+    m_vista_sim, vista_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $passive_1.m_vista_true
+      m_lim: $mag_limits.vista
+      rykoff_parameters: !numpy.array [[[2.07, 0.666], [2.07, 0.666], [1.801, 0.726], [1.896, 0.688]]] # can also be file path - currently wrong values
+      m_zp: 30
+  passive_2:
+    z, M_r: !skypy.galaxies.schechter_lf
+      redshift: $z_range
+      M_star: !astropy.modeling.models.Linear1D [$M_exp_passive_2, $M_star_passive_2]
+      phi_star: !astropy.modeling.models.Exponential1D [$log_phi_passive_2, $phi_exp-1_passive_2] # astropy function requires 1/tau as second argument
+      alpha: $alpha_passive_2
+      m_lim: $mag_lim
+      sky_area: $sky_area
+    coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
+      redshift: !numpy.zeros_like [$passive_2.z]
+      alpha0: [0.95, 2., 1. , 1.3, 2.2]
+      alpha1: [0.7, 1.4,  0.8, 1.1, 1.4]
+      weight: [9.37089161e-02, 1.29501114e-06, 2.97027927e-02, 8.49022904e-01, 1.84128669e-03]
+    sm: !skypy.galaxies.spectrum.kcorrect.stellar_mass
+      coefficients: $passive_2.coeff
+      magnitudes: $passive_2.M_r
+      filter: hsc2017-r
+    m_hsc_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $passive_2.z
+      coefficients: $passive_2.coeff
+      stellar_mass: $passive_2.sm
+      filters: $filters.hsc
+    m_hsc_sim, hsc_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $passive_2.m_hsc_true
+      m_lim: $mag_limits.hsc
+      rykoff_parameters: !numpy.array [[[3.171762, 0.66012], [2.49441, 0.80837], [1.928186, 0.95754], [1.778944, 0.99381], [1.771616, 1.017114]]]
+      m_zp: 30
+    m_vista_true: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $passive_2.z
+      coefficients: $passive_2.coeff
+      stellar_mass: $passive_2.sm
+      filters: $filters.vista
+    m_vista_sim, vista_sigma: !skypy_x.galaxies_paper.gaussian_error_magnitude
+      m: $passive_2.m_vista_true
+      m_lim: $mag_limits.vista
+      rykoff_parameters: !numpy.array [[[2.07, 0.666], [2.07, 0.666], [1.801, 0.726], [1.896, 0.688]]] # can also be file path - currently wrong values
+      m_zp: 30
