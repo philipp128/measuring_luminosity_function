@@ -20,7 +20,7 @@ parameters:
 cosmology: !astropy.cosmology.FlatLambdaCDM
   H0: 70
   Om0: 0.3
-mag_lim: 27
+mag_lim: 30
 sky_area: 1.27 deg2
 filters:
   hsc: [ hsc2017-g, hsc2017-r, hsc2017-i, hsc2017-z, hsc2017-y ]
@@ -30,7 +30,7 @@ bands_vista: 'YJHK'
 mag_limits:
   hsc: [27.8, 27.4, 27.1, 26.6, 25.6]
   vista: [24.5, 24.5, 24.2, 23.75]
-z_range: !numpy.geomspace [0.01, 4.5, 100]
+z_range: !numpy.geomspace [0.01, 3.0, 100]
 tables:
   SF:
     z, M_r: !skypy.galaxies.schechter_lf

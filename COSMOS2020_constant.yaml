@@ -29,8 +29,8 @@ tables:
   SF:
     z, M_B: !skypy.galaxies.schechter_lf
       redshift: $z_range
-      M_star: !astropy.modeling.models.Linear1D [$a_m_SF, $b_m_SF]
-      phi_star: !astropy.modeling.models.Exponential1D [$b_phi_SF, $a_phi-1_SF] # astropy function requires 1/tau as secod argument
+      M_star: -20.623
+      phi_star: 0.004245
       alpha: $alpha_SF
       m_lim: $mag_lim
       sky_area: $sky_area
@@ -66,8 +66,8 @@ tables:
   Q:
     z, M_B: !skypy.galaxies.schechter_lf
       redshift: $z_range
-      M_star: !astropy.modeling.models.Linear1D [$a_m_Q, $b_m_Q]
-      phi_star: !astropy.modeling.models.Exponential1D [$b_phi_Q, $a_phi-1_Q] # astropy function requires 1/tau as secod argument
+      M_star: -20.372
+      phi_star: 0.005169 
       alpha: $alpha_Q
       m_lim: $mag_lim
       sky_area: $sky_area
