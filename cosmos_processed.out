@@ -1,0 +1,24 @@
+/opt/apps/pkgs/anaconda3/2019.03/intel64/lib/python3.7/site-packages/dask/config.py:168: YAMLLoadWarning: calling yaml.load() without Loader=... is deprecated, as the default Loader is unsafe. Please read https://msg.pyyaml.org/load for full details.
+  data = yaml.load(f.read()) or {}
+/opt/apps/pkgs/anaconda3/2019.03/intel64/lib/python3.7/site-packages/sklearn/utils/validation.py:37: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+  LARGE_SPARSE_SUPPORTED = LooseVersion(scipy_version) >= '0.14.0'
+COSMOS_Processed_catalogue.py:244: RuntimeWarning: invalid value encountered in log10
+  mag = -2.5*np.log10(cat[b+flx].data) + m0  # log of negative flux is masked
+WARNING: UnitsWarning: 'log(solMass)' did not parse as fits unit: 'log' is not a recognized function If this is meant to be a custom unit, define it with 'u.def_unit'. To have it recognized inside a file reader or other code, enable it with 'u.add_enabled_units'. For details, see https://docs.astropy.org/en/latest/units/combining_and_defining.html [astropy.units.core]
+WARNING: UnitsWarning: 'log(solMass/yr)' did not parse as fits unit: 'log' is not a recognized function If this is meant to be a custom unit, define it with 'u.def_unit'. To have it recognized inside a file reader or other code, enable it with 'u.add_enabled_units'. For details, see https://docs.astropy.org/en/latest/units/combining_and_defining.html [astropy.units.core]
+The parent sample includes 1720700 sources
+Now restricted to 723897 sources by using FLAG_COMBINED
+rescale HSC_g_FLUX_APER3 to total flux
+rescale HSC_r_FLUX_APER3 to total flux
+rescale HSC_i_FLUX_APER3 to total flux
+rescale HSC_z_FLUX_APER3 to total flux
+rescale HSC_y_FLUX_APER3 to total flux
+rescale UVISTA_Y_FLUX_APER3 to total flux
+rescale UVISTA_J_FLUX_APER3 to total flux
+rescale UVISTA_H_FLUX_APER3 to total flux
+rescale UVISTA_Ks_FLUX_APER3 to total flux
+rescale SC_B_FLUX_APER3 to total flux
+
+real	2m10.552s
+user	0m41.140s
+sys	0m14.674s
