@@ -14,7 +14,7 @@ parameters:
 cosmology: !astropy.cosmology.FlatLambdaCDM
   H0: 70
   Om0: 0.3
-mag_lim: 26
+mag_lim: 27
 sky_area: 1.27 deg2
 filters:
   hsc: [ hsc2017-g, hsc2017-r, hsc2017-i, hsc2017-z, hsc2017-y ]
